@@ -73,73 +73,29 @@ RUN apt-get update && apt-get install -y \
 # install dependencies
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     build-essential \
-    apt-utils \
     curl \
     nano \
     vim \
-    libfreetype6-dev \
-    libpng12-dev \
-    libzmq3-dev \
-    git \
     python-numpy \
-    python-dev \
-    python-opengl \
     cmake \
-    zlib1g-dev \
-    libjpeg-dev \
-    xvfb \
-    libav-tools \
     xorg-dev \
-    libboost-all-dev \
-    libsdl2-dev \
-    swig \
-    libgtk2.0-dev \
-    wget \
-    ca-certificates \
-    unzip \
-    aptitude \
-    pkg-config \
-    qtbase5-dev \
-    libqt5opengl5-dev \
-    libassimp-dev \
-    libpython3.5-dev \
-    libboost-python-dev \
-    libtinyxml-dev \
-    golang \
-    python-opencv \
-    terminator \
-    tmux \
-    libcanberra-gtk-module \
-    libfuse2 \
-    libnss3 \
-    fuse \
-    python3-tk \
-    libglfw3-dev \
-    libgl1-mesa-dev \
-    libgl1-mesa-glx \
-    libglew-dev \
-    libosmesa6-dev \
-    net-tools \
-    xpra \
-    xserver-xorg-dev \
-    libffi-dev \
-    libxslt1.1 \
-    feedgnuplot \
-    libglew-dev \
-    parallel \
-    htop \
-    apt-transport-https
+    freeglut3-dev \
+    wget
 
 RUN apt-get install -y mesa-utils \
     && apt-get install -y clang \
     && apt-get install -y cmake \
     && apt-get install wget
 
-RUN wget https://github.com/bulletphysics/bullet3/archive/refs/tags/2.88.tar.gz \
-    && tar -xvf 2.88.tar.gz \
-    && cd ./bullet3-2.88 \
+RUN wget https://github.com/bulletphysics/bullet3/archive/2.88.tar.gz \
+    && mv 2.88.tar.gz bullet3-2.88.tar.gz \
+    && tar xvzf bullet3-2.88.tar.gz \
+    && cd bullet3-2.88 \
+    && sed -i 's/-DUSE_DOUBLE_PRECISION=ON/-DUSE_DOUBLE_PRECISION=OFF/g' build_cmake_pybullet_double.sh\
     && ./build_cmake_pybullet_double.sh \
-    && cd ./build_cmake && make install
+    && cd build_cmake \
+    && make install \
+    && cd ../.. && rm -r bullet3-2.88 && rm bullet3-2.88.tar.gz
 
 
 RUN wget https://gitlab.com/libeigen/eigen/-/archive/3.3.7/eigen-3.3.7.tar.gz \
@@ -147,27 +103,28 @@ RUN wget https://gitlab.com/libeigen/eigen/-/archive/3.3.7/eigen-3.3.7.tar.gz \
     && cd ./eigen-3.3.7 \
     && mkdir build && cd build \
     && cmake .. \
-    && make install
-
-#RUN wget -O freeglut-3.0.0.tar.gz "https://sourceforge.net/projects/freeglut/files/freeglut/3.0.0/freeglut-3.0.0.tar.gz/download?use_mirror=gigenet&use_mirror=gigenet&r=http%3A%2F%2Ffreeglut.sourceforge.net%2F" \
- #   && tar -xvf freeglut-3.0.0.tar.gz \
-  #  && cd ./freeglut-3.0.0 \
-   # && cmake .\
-    #&& make && make install
+    && make install \
+    && cd ../.. && rm -r eigen-3.3.7 && rm eigen-3.3.7.tar.gz
 
 RUN wget -O glew-2.1.0.tar.gz "https://sourceforge.net/projects/glew/files/glew/2.1.0/glew-2.1.0.tgz/download" \
     && tar -xvf glew-2.1.0.tar.gz \
     && cd ./glew-2.1.0 \
-    && make && make install && make clean
+    && make && make install && make clean \
+    && ln -s /usr/lib64/libGLEW.so.2.1 /usr/lib/libGLEW.so.2.1 \
+    && cd .. && rm -r glew-2.1.0 && rm glew-2.1.0.tar.gz
 
 RUN wget -O swig-4.0.0.tar.gz "https://downloads.sourceforge.net/swig/swig-4.0.0.tar.gz" \
     && tar -xvf swig-4.0.0.tar.gz \
     && cd swig-4.0.0 \
     && ./configure --without-pcre \
-    && make && make install
+    && make && make install \
+    && cd .. && rm -r swig-4.0.0 && rm swig-4.0.0.tar.gz
 
 RUN apt-get install -y libopenmpi-dev
 RUN pip install PyOpenGL PyOpenGL_accelerate
 RUN pip install mpi4py
 
-COPY . /src/
+COPY . $HOME/DeepMimic
+
+RUN cd $HOME/DeepMimic/DeepMimicCore \
+    && make python
